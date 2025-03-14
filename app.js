@@ -36,22 +36,27 @@ app.get('/',(req, res) => {
 app.post("/api/lamp/power", (req, res) => {
 	const {data} = req.body;
 	console.log(data);
-	res.send(`lamp is now ${data}`);
+//	res.send(`lamp is now ${data}`);
 //	console.log(req)
-/*	if(data.toLowerCase() === "off"){
-		
+	if(data.toLowerCase() === "off"){
+		console.log("why");
 		res.send(`Lamp is now ${data}`);
 
 	} else if (data.toLowerCase() === "on") {
 
 	res.send(`Lamp is now ${data}`);
 	}
-*/
+
 
 
 
 });
 
+app.post("/api/lamp/bright", (req, res) => {
+        const {data} = req.body;
+        console.log(data);
+        res.send(`bright is now ${data}`);
+});
 
 app.listen(3000, () => console.log("Running!"));
 
