@@ -7,21 +7,33 @@ const bodyParser = require('body-parser');
 const axios = require('axios')
 
 const app = express();
-
+function poewer (a){
+console.log('hell0' + `${a}`);
+}
 function power (a) {
-	axios.put('https://developer-api.govee.com/v1/devices/control',{
-	headers: {
-		'Content-Type': 'application/json',
-		'Govee-API-Key': 'fca3cfcd-6762-437d-8694-4b9bdbba040b'
-	},
-	data: {
-		'device': '49:5B:CE:2A:45:46:4A:6D',
-		'model': 'H6076',
-		'cmd':{'name':'turn','value':`${a}`}
+	var unirest = require('unirest');
+	var req = unirest('PUT', 'https://developer-api.govee.com/v1/devices/control')
+  	.headers({
+    	 	'Content-Type': 'application/json',
+    	 	'Govee-API-Key': 'fca3cfcd-6762-437d-8694-4b9bdbba040b'
+  	})
+
+	.send(JSON.stringify({
+		"device": "49:5B:CE:2A:45:46:4A:6D",
+		"model": "H6076",
+		"cmd": {
+			"name": "turn",
+			"value": `${a}`
 	}
+	}))
+  	.end(function (res) { 
+
+		if (res.error) throw new Error(res.error); 
+		console.log(res.raw_body);
+	});
 
 
-});
+
 }
 //app.use(bodyParser.urlencoded({extended: true }));
 app.use(express.json());
@@ -36,15 +48,18 @@ app.get('/',(req, res) => {
 app.post("/api/lamp/power", (req, res) => {
 	const {data} = req.body;
 	console.log(data);
-//	res.send(`lamp is now ${data}`);
-//	console.log(req)
+
 	if(data.toLowerCase() === "off"){
-		console.log("why");
+
 		res.send(`Lamp is now ${data}`);
+		power(data);
 
 	} else if (data.toLowerCase() === "on") {
 
-	res.send(`Lamp is now ${data}`);
+		res.send(`Lamp is now ${data}`);
+		power(data)
+	}else{
+		res.send("idiot");
 	}
 
 
