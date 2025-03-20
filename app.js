@@ -6,6 +6,7 @@ const express = require('express');
 const bodyParser = require('body-parser');
 const axios = require('axios')
 const app = express();
+require('dotenv').config()
 
 function control (func, data) {
 	if(func === "brightness"){
@@ -15,7 +16,7 @@ function control (func, data) {
 	var req = unirest('PUT', 'https://developer-api.govee.com/v1/devices/control')
   	.headers({
     	 	'Content-Type': 'application/json',
-    	 	'Govee-API-Key': 'fca3cfcd-6762-437d-8694-4b9bdbba040b'
+		'Govee-API-Key': process.env.api_key
   	})
 
 	.send(JSON.stringify({
