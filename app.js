@@ -5,12 +5,12 @@
 const express = require('express');
 const bodyParser = require('body-parser');
 const axios = require('axios')
-
 const app = express();
-function poewer (a){
-console.log('hell0' + `${a}`);
-}
-function power (a) {
+
+function control (func, data) {
+	if(func === "brightness"){
+		data = parseInt(data);
+	}
 	var unirest = require('unirest');
 	var req = unirest('PUT', 'https://developer-api.govee.com/v1/devices/control')
   	.headers({
@@ -22,19 +22,18 @@ function power (a) {
 		"device": "49:5B:CE:2A:45:46:4A:6D",
 		"model": "H6076",
 		"cmd": {
-			"name": "turn",
-			"value": `${a}`
+			"name": func,
+			"value": data
 	}
 	}))
-  	.end(function (res) { 
+  	.end(function (res) {
 
-		if (res.error) throw new Error(res.error); 
+		if (res.error) throw new Error(res.error);
 		console.log(res.raw_body);
 	});
 
-
-
 }
+
 //app.use(bodyParser.urlencoded({extended: true }));
 app.use(express.json());
 //app.use(express.urlencoded({extended: true}));
@@ -52,12 +51,12 @@ app.post("/api/lamp/power", (req, res) => {
 	if(data.toLowerCase() === "off"){
 
 		res.send(`Lamp is now ${data}`);
-		power(data);
+		control("turn", data);
 
 	} else if (data.toLowerCase() === "on") {
 
 		res.send(`Lamp is now ${data}`);
-		power(data)
+		control("turn", data)
 	}else{
 		res.send("idiot");
 	}
@@ -70,7 +69,14 @@ app.post("/api/lamp/power", (req, res) => {
 app.post("/api/lamp/bright", (req, res) => {
         const {data} = req.body;
         console.log(data);
-        res.send(`bright is now ${data}`);
+	if(parseInt(data) > 0 && parseInt(data) <= 100){
+        	res.send(`bright is now ${data}`);
+		control("brightness", data);
+	}
+	else{
+		res.send('idiot');
+	}
+
 });
 
 app.listen(3000, () => console.log("Running!"));
