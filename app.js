@@ -7,6 +7,36 @@ const bodyParser = require('body-parser');
 const axios = require('axios')
 const app = express();
 require('dotenv').config()
+const { PythonShell } = require('python-shell');
+const {spawn} = require('child_process');
+
+let dataToSend;
+    // spawn new child process to call the python script 
+    // and pass the variable values to the python script
+    const python = spawn('python', ['/app/api/color.py', "blue"]);
+    // collect data from script
+    python.stdout.on('data', function (data) {
+        console.log('Pipe data from python script ...');
+        dataToSend = data.toString();
+
+	var dataToSend = dataToSend.replace(/'|\]| |\[/g, "");
+	console.log(dataToSend);
+	dataToSend = dataToSend.split(",");
+	const { 0: r, 1: g, 2: b } = dataToSend;
+	console.log(r);
+	console.log(g);
+	console.log(b);
+
+//	Send to light api
+
+    });
+    // in close event we are sure that stream from child process is closed
+    python.on('close', (code) => {
+        console.log(`child process close all stdio with code ${code}`);
+        // send data to browser
+        //res.send(dataToSend)
+    });
+
 
 function control (func, data) {
 	if(func === "brightness"){
