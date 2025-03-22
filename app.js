@@ -11,31 +11,77 @@ const { PythonShell } = require('python-shell');
 const {spawn} = require('child_process');
 
 let dataToSend;
+function rgb (color) {
     // spawn new child process to call the python script 
     // and pass the variable values to the python script
-    const python = spawn('python', ['/app/api/color.py', "blue"]);
+    const python = spawn('python', ['/app/api/color.py', color]);
     // collect data from script
     python.stdout.on('data', function (data) {
-        console.log('Pipe data from python script ...');
+
         dataToSend = data.toString();
+//	console.log(dataToSend);
+	test = dataToSend.replace(/\s+/g, '');
 
-	var dataToSend = dataToSend.replace(/'|\]| |\[/g, "");
-	console.log(dataToSend);
-	dataToSend = dataToSend.split(",");
-	const { 0: r, 1: g, 2: b } = dataToSend;
-	console.log(r);
-	console.log(g);
-	console.log(b);
+	if(test === "err") {
+		console.log("not a color");
+//		return false;
+	}else{
+		var dataToSend = dataToSend.replace(/'|\]| |\[/g, "");
 
-//	Send to light api
+		dataToSend = dataToSend.split(",");
+		const { 0: r, 1: g, 2: b } = dataToSend;
+
+		console.log(r);
+		console.log(g);
+		console.log(b);
+	//sent to color function
+		change_color(r, g, b);
+//		return "true";
+	}
+
 
     });
     // in close event we are sure that stream from child process is closed
     python.on('close', (code) => {
-        console.log(`child process close all stdio with code ${code}`);
+        console.log(`status code of color script run ${code}`);
         // send data to browser
-        //res.send(dataToSend)
+
     });
+
+}
+
+function change_color (r, g, b){
+	r=parseInt(r);
+	g=parseInt(g);
+	b=parseInt(b);
+	var unirest = require('unirest');
+	var req = unirest('PUT', 'https://developer-api.govee.com/v1/devices/control')
+  	.headers({
+    		'Content-Type': 'application/json',
+    		'Govee-API-Key': process.env.api_key
+  	})
+
+	.send(JSON.stringify({
+		"device": "49:5B:CE:2A:45:46:4A:6D",
+		"model": "H6076",
+    		"cmd": {
+      		"name": "color",
+      		"value": {
+        		"r": r,
+        		"g": g,
+        		"b": b
+      		}
+    	}
+  	}))
+  	.end(function (res) {
+
+    		if (res.error) throw new Error(res.error);
+    		console.log(res.raw_body);
+  	});
+
+
+
+}
 
 
 function control (func, data) {
@@ -110,5 +156,11 @@ app.post("/api/lamp/bright", (req, res) => {
 
 });
 
+
+app.post("/api/lamp/color", (req, res) => {
+	const {data} = req.body;
+	rgb(data);
+	res.send(`trying to change light to ${data}`);
+});
 app.listen(3000, () => console.log("Running!"));
 

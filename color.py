@@ -16,7 +16,7 @@ def color_info(color_name):
 #        f=re.findall("[^[]']",x)
  #       print (f)
     except ValueError:
-        print ("Color name not recognized. Please try another color.")
+        print ("err")
 
 color_info(color)
 
