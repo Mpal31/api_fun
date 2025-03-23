@@ -11,7 +11,7 @@ def color_info(color_name):
         rgb_value=str(rgb_value)
  #       print (rgb_value)
         #rgb_value=str(rgb_value)
-        x = re.findall("\d{1,3}", rgb_value)
+        x = re.findall(r"\d{1,3}", rgb_value)
         print (x)
 #        f=re.findall("[^[]']",x)
  #       print (f)

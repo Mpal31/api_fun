@@ -14,30 +14,30 @@ let dataToSend;
 function rgb (color) {
     // spawn new child process to call the python script 
     // and pass the variable values to the python script
-    const python = spawn('python', ['/app/api/color.py', color]);
+    const python = spawn('python', ['./color.py', color]);
     // collect data from script
     python.stdout.on('data', function (data) {
 
         dataToSend = data.toString();
-//	console.log(dataToSend);
-	test = dataToSend.replace(/\s+/g, '');
+		console.log(dataToSend);
+		test = dataToSend.replace(/\s+/g, '');
 
-	if(test === "err") {
-		console.log("not a color");
+		if(test === "err") {
+			console.log("not a color");
 //		return false;
-	}else{
-		var dataToSend = dataToSend.replace(/'|\]| |\[/g, "");
+		}else{
+			var dataToSend = dataToSend.replace(/'|\]| |\[/g, "");
 
-		dataToSend = dataToSend.split(",");
-		const { 0: r, 1: g, 2: b } = dataToSend;
+			dataToSend = dataToSend.split(",");
+			const { 0: r, 1: g, 2: b } = dataToSend;
 
-		console.log(r);
-		console.log(g);
-		console.log(b);
+			console.log(r);
+			console.log(g);
+			console.log(b);
 	//sent to color function
-		change_color(r, g, b);
+			change_color(r, g, b);
 //		return "true";
-	}
+		}
 
 
     });
@@ -159,7 +159,8 @@ app.post("/api/lamp/bright", (req, res) => {
 
 app.post("/api/lamp/color", (req, res) => {
 	const {data} = req.body;
-	rgb(data);
+	console.log(data);
+	rgb (data);
 	res.send(`trying to change light to ${data}`);
 });
 app.listen(3000, () => console.log("Running!"));
