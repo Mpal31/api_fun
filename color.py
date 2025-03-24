@@ -2,24 +2,18 @@ import sys
 from webcolors import name_to_hex, name_to_rgb
 import re
 
+#take in arguments
 color=sys.argv[1]
-#print(color)
+
+#function to translate color names to rgb values
 def color_info(color_name):
     try:
-#        hex_value = name_to_hex(color_name)
         rgb_value = name_to_rgb(color_name)
         rgb_value=str(rgb_value)
- #       print (rgb_value)
-        #rgb_value=str(rgb_value)
         x = re.findall(r"\d{1,3}", rgb_value)
         print (x)
-#        f=re.findall("[^[]']",x)
- #       print (f)
+        
     except ValueError:
         print ("err")
 
 color_info(color)
-
-
-# Example usage
-#print(name_to_rgb("blue"))
