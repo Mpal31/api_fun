@@ -89,7 +89,7 @@ function control (func, data) {
 	if(func === "brightness"){
 		data = parseInt(data);
 	}
-	var unirest = require('unirest');
+
 	var req = unirest('PUT', 'https://developer-api.govee.com/v1/devices/control')
   	.headers({
     	 	'Content-Type': 'application/json',
