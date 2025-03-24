@@ -1,16 +1,16 @@
-//curl -X POST http://localhost:3000/api/lamp -H "Content-Type: application/json" -d '{"data": "off"}'
-//testing
-//url -X POST https://openapi.api.govee.com/router/v1/devices/control -H "Content-Type: application/json" "Govee-API-Key: " -d '{'device': '49:5B:CE:2A:45:46:4A:6D','model': 'H6076','cmd':{'name':'turn','value':'off'}}' 
-//test
+//curl structure
+//curl -X POST http://192.168.1.19:3000/api/lamp/color -H "Content-Type: application/json" -d '{"data": "purple"}'
+
 const express = require('express');
-const bodyParser = require('body-parser');
-const axios = require('axios')
 const app = express();
+//used to send rest
+var unirest = require('unirest');
+//used to process api keys
 require('dotenv').config()
-const { PythonShell } = require('python-shell');
+//used to run python script to change color names into rgb numbers
 const {spawn} = require('child_process');
 
-let dataToSend;
+//rgb function that calls python script to translate color names to rgb
 function rgb (color) {
     // spawn new child process to call the python script 
     // and pass the variable values to the python script
@@ -18,25 +18,25 @@ function rgb (color) {
     // collect data from script
     python.stdout.on('data', function (data) {
 
+		//convert recieved data from scrypt to string from buffer
         dataToSend = data.toString();
-		console.log(dataToSend);
+
+		//remove white spaces to check for error
 		test = dataToSend.replace(/\s+/g, '');
 
+		//test if there was an error in python script
 		if(test === "err") {
 			console.log("not a color");
-//		return false;
-		}else{
-			var dataToSend = dataToSend.replace(/'|\]| |\[/g, "");
 
+		}else{
+			//manipulate data to to get the three ints seperated by comma
+			var dataToSend = dataToSend.replace(/'|\]| |\[/g, "");
 			dataToSend = dataToSend.split(",");
 			const { 0: r, 1: g, 2: b } = dataToSend;
 
-			console.log(r);
-			console.log(g);
-			console.log(b);
-	//sent to color function
+		//Call function to sent rest command to change color
 			change_color(r, g, b);
-//		return "true";
+
 		}
 
 
@@ -44,17 +44,17 @@ function rgb (color) {
     // in close event we are sure that stream from child process is closed
     python.on('close', (code) => {
         console.log(`status code of color script run ${code}`);
-        // send data to browser
 
     });
 
 }
 
+//function that send rest call to chaneg color on lamp
+//looking to consolidate two rest calls into one
 function change_color (r, g, b){
 	r=parseInt(r);
 	g=parseInt(g);
 	b=parseInt(b);
-	var unirest = require('unirest');
 	var req = unirest('PUT', 'https://developer-api.govee.com/v1/devices/control')
   	.headers({
     		'Content-Type': 'application/json',
@@ -83,7 +83,8 @@ function change_color (r, g, b){
 
 }
 
-
+//rest call to turn on/off lamp and set brightness
+//looking to consolidate two restcalls into one function
 function control (func, data) {
 	if(func === "brightness"){
 		data = parseInt(data);
@@ -111,16 +112,15 @@ function control (func, data) {
 
 }
 
-//app.use(bodyParser.urlencoded({extended: true }));
-app.use(express.json());
-//app.use(express.urlencoded({extended: true}));
-//const data = {}
-//const lamps = "lamp!"
 
+app.use(express.json());
+
+//will be used to test connectivity
 app.get('/',(req, res) => {
 	res.send('hello world');
 });
 
+//endpoint for power cycle
 app.post("/api/lamp/power", (req, res) => {
 	const {data} = req.body;
 	console.log(data);
@@ -143,6 +143,7 @@ app.post("/api/lamp/power", (req, res) => {
 
 });
 
+//endpoint to set brightness
 app.post("/api/lamp/bright", (req, res) => {
         const {data} = req.body;
         console.log(data);
@@ -156,12 +157,13 @@ app.post("/api/lamp/bright", (req, res) => {
 
 });
 
-
+//endpoint to change color
 app.post("/api/lamp/color", (req, res) => {
 	const {data} = req.body;
 	console.log(data);
 	rgb (data);
 	res.send(`trying to change light to ${data}`);
 });
-app.listen(3000, () => console.log("Running!"));
 
+
+app.listen(3000, () => console.log("Running!"));
