@@ -16,7 +16,7 @@ var unirest = require('unirest');
 //used to process api keys
 require('dotenv').config()
 //used to run python script to change color names into rgb numbers
-const {spawn} = require('child_process');
+
 
 const rgb = require('./get_rgb_func.js');
 

@@ -1,4 +1,5 @@
 function rgb (color) {
+    const {spawn} = require('child_process');
     // spawn new child process to call the python script 
     // and pass the variable values to the python script
     const python = spawn('python', ['./color.py', color]);
@@ -35,4 +36,7 @@ function rgb (color) {
     });
 
 }
+
+
+
 module.exports = rgb;
