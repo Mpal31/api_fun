@@ -8,17 +8,15 @@ const bcrypt = require('bcryptjs');
 const { body, validationResult } = require('express-validator');
 const jwt = require('jsonwebtoken');
 
-//const User = require('./models/User');
+const User = require('./user.js');
+const control = require('./control');
 
+const rgb = require('./change_color.js');
+const authMiddleware = require('./authMiddleware.js');
 
-//used to send rest
-var unirest = require('unirest');
 //used to process api keys
-require('dotenv').config()
-//used to run python script to change color names into rgb numbers
+require('dotenv').config();
 
-
-const rgb = require('./get_rgb_func.js');
 
 const app = express();
 app.use(express.json());
@@ -30,113 +28,7 @@ mongoose.connect('mongodb://localhost:27017/authdb', {
 .then(() => console.log('MongoDB connected'))
 .catch((err) => console.error('MongoDB connection failed:', err));
 
-const UserSchema = new mongoose.Schema({
-	username: { type: String, required: true, unique: true },
-	password: { type: String, required: true },
-	token: { type: String, required: false, unique: true },
-	role: {type: String, required: true }
-});
 
-const User = mongoose.model('User', UserSchema);
-
-
-	//rgb function that calls python script to translate color names to rgb
-
-
-//function that send rest call to chaneg color on lamp
-//looking to consolidate two rest calls into one
-function change_color (r, g, b){
-	r=parseInt(r);
-	g=parseInt(g);
-	b=parseInt(b);
-	var req = unirest('PUT', 'https://developer-api.govee.com/v1/devices/control')
-  	.headers({
-    		'Content-Type': 'application/json',
-    		'Govee-API-Key': process.env.api_key
-  	})
-
-	.send(JSON.stringify({
-		"device": "49:5B:CE:2A:45:46:4A:6D",
-		"model": "H6076",
-    		"cmd": {
-      		"name": "color",
-      		"value": {
-        		"r": r,
-        		"g": g,
-        		"b": b
-      		}
-    	}
-  	}))
-  	.end(function (res) {
-
-    		if (res.error) throw new Error(res.error);
-    		console.log(res.raw_body);
-  	});
-
-
-
-}
-
-//rest call to turn on/off lamp and set brightness
-//looking to consolidate two restcalls into one function
-function control (func, data) {
-	if(func === "brightness"){
-		data = parseInt(data);
-	}
-
-	var req = unirest('PUT', 'https://developer-api.govee.com/v1/devices/control')
-  	.headers({
-    	 	'Content-Type': 'application/json',
-		'Govee-API-Key': process.env.api_key
-  	})
-
-	.send(JSON.stringify({
-		"device": "49:5B:CE:2A:45:46:4A:6D",
-		"model": "H6076",
-		"cmd": {
-			"name": func,
-			"value": data
-	}
-	}))
-  	.end(function (res) {
-
-		if (res.error) throw new Error(res.error);
-		console.log(res.raw_body);
-	});
-
-}
-
-// Authentication middleware
-const authMiddleware = async (req, res, next) => {
-	try {
-	  const token = req.header('Authorization')?.replace('Bearer ', '');
-	  console.log(token)
-	  if (!token) {
-		return res.status(401).json({ message: 'Access denied. No token provided.' });
-	  }
-	  console.log("hi")
-	  const decoded = jwt.verify(token, 'my_seceret_key' );
-	  //console.log("hello"+decoded)
-	  const user = await User.findOne({ _id: decoded.userId, token });
-	  
-	  if (!user) {
-		return res.status(401).json({ message: 'Invalid token.' });
-	  }
-	  
-	  // Add user to request object for use in route handlers
-	  req.user = decoded;
-	  req.token = token;
-	  next();
-	} catch (error) {
-	  if (error instanceof jwt.JsonWebTokenError) {
-		return res.status(401).json({ message: 'Invalid token.' });
-	  }
-	  console.error('Auth middleware error:', error);
-	  res.status(500).json({ message: 'Internal server error' });
-	}
-  };
-
-//will be used to test connectivity
 app.get('/',(req, res) => {
 	res.send('hello world');
 });
@@ -166,7 +58,7 @@ app.post('/api/register',
 
 
 app.post("/api/auth/token", async (req,res)=> {
-	const {username, password}=req.body
+	
 	try {
 		// Validate request body
 		const { username, password } = req.body;
@@ -195,7 +87,7 @@ app.post("/api/auth/token", async (req,res)=> {
 		// Generate JWT token
 		const token = jwt.sign(
 		  { userId: user._id, username: user.username },
-		  'my_seceret_key',
+		  process.env.secret,
 		  { expiresIn: '1h' }
 		);
 	
@@ -214,40 +106,19 @@ app.post("/api/auth/token", async (req,res)=> {
 	  }
 
 });
+
 //endpoint for power cycle
 app.post("/api/lamp/power", authMiddleware, async (req, res) => {
-	const { data} = req.body;
-	//console.log(username);
-	//console.log(password);
-	console.log(data);
-/*
-	try {
-		const user = await User.findOne({ username });
-		if (!user) return res.status(400).json({ message: 'Invalid credentials' });
+	const {data} = req.body;
 	
-		const isMatch = await bcrypt.compare(password, user.password);
-		if (!isMatch) return res.status(400).json({ message: 'Invalid credentials' });
-	
-		const token = jwt.sign({ id: user._id}, 'your_secret_key', { expiresIn: '1h' });
-		res.status(200).json({ token, message: 'Logged in successfully' });
-	  } catch (err) {
-		res.status(500).json({ message: 'Error logging in', error: err.message });
-	  }
-*/
-	if(data.toLowerCase() === "off"){
+	if(data.toLowerCase() === "off" || data.toLowerCase() === "on" ){
 
-		res.send(`Lamp is now ${data}`);
+		res.status(200).json({ message: `Turning light ${data}` });
 		control("turn", data);
-
-	} else if (data.toLowerCase() === "on") {
-
-		res.send(`Lamp is now ${data}`);
-		control("turn", data)
+	
 	}else{
-		res.send("idiot");
+		res.status(300).json({ message: `Bad request` });
 	}
-
-
 
 
 });
@@ -257,17 +128,17 @@ app.post("/api/lamp/bright", (req, res) => {
         const {data} = req.body;
         console.log(data);
 	if(parseInt(data) > 0 && parseInt(data) <= 100){
-        	res.send(`bright is now ${data}`);
+        	res.status(200).json({message: `bright is now ${data}`});
 		control("brightness", data);
 	}
 	else{
-		res.send('idiot');
+		res.status(400).json({message: `Bad request`})
 	}
 
 });
 
 //endpoint to change color
-app.post("/api/lamp/color", (req, res) => {
+app.post("/api/lamp/color", authMiddleware, async (req, res) => {
 	const {data} = req.body;
 	console.log(data);
 	rgb(data);
