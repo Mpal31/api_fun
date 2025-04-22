@@ -21,7 +21,7 @@ require('dotenv').config();
 const app = express();
 app.use(express.json());
 
-mongoose.connect('mongodb://localhost:27017/authdb', {
+mongoose.connect(process.env.mongo, {
 	useNewUrlParser: true,
     useUnifiedTopology: true,
 })
@@ -30,7 +30,7 @@ mongoose.connect('mongodb://localhost:27017/authdb', {
 
 
 app.get('/',(req, res) => {
-	res.send('hello world');
+	res.status(200).json({message: 'hello world'});
 });
 
 app.post('/api/register', 

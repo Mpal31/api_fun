@@ -5,14 +5,14 @@ function control (func, data) {
         data = parseInt(data);
     }
 
-    var req = unirest('PUT', 'https://developer-api.govee.com/v1/devices/control')
+    var req = unirest('PUT', process.env.endpoint)
     .headers({
             'Content-Type': 'application/json',
         'Govee-API-Key': process.env.api_key
     })
 
     .send(JSON.stringify({
-        "device": "49:5B:CE:2A:45:46:4A:6D",
+        "device": process.env.device,
         "model": "H6076",
         "cmd": {
             "name": func,
